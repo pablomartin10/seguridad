@@ -1,24 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 const FormGrid = () => {
-    const [forms, setForms] = useState([]);
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        // Añadir más campos según el formulario
+    });
 
-    useEffect(() => {
-        axios.get('http://localhost:5000/api/forms')
-            .then(response => setForms(response.data))
-            .catch(error => console.error(error));
-    }, []);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post('http://localhost:5000/api/forms/submit', formData);
+            alert(response.data.message);
+        } catch (error) {
+            console.error(error);
+            alert('Error al enviar el formulario');
+        }
+    };
 
     return (
-        <div className="grid-container">
-            {forms.map(form => (
-                <a key={form.id} href={`/form/${form.id}`} className="grid-item">
-                    <img src={`/images/${form.image}`} alt={form.name} />
-                    <p>{form.name}</p>
-                </a>
-            ))}
-        </div>
+        <form onSubmit={handleSubmit}>
+            <input
+                type="text"
+                placeholder="Título"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
+            <textarea
+                placeholder="Descripción"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+            <button type="submit">Enviar</button>
+        </form>
     );
 };
 
