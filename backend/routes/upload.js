@@ -1,28 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const { Client } = require('@microsoft/microsoft-graph-client');
-require('isomorphic-fetch');
+const multer = require('multer');
+const path = require('path');
+const { exec } = require('child_process');
 
-// Configuración de Microsoft Graph
-const client = Client.init({
-    authProvider: (done) => {
-        done(null, process.env.SHAREPOINT_ACCESS_TOKEN);
-    }
-});
+// Configuración de Multer para manejar archivos adjuntos
+const upload = multer({ dest: 'uploads/' });
 
-// Subir archivo a SharePoint
-router.post('/', async (req, res) => {
-    const { formName, file } = req.body;
-    const folderName = formName.replace(/ /g, '_'); // Normalizar nombre de carpeta
+// Ruta para recibir datos del formulario
+router.post('/', upload.single('archivo'), (req, res) => {
+    const { nombre, descripcion } = req.body;
+    const archivo = req.file;
 
-    try {
-        const response = await client
-            .api(`/sites/TU_SITIO/drive/root:/${folderName}/${file.name}:/content`)
-            .put(file);
-        res.json({ success: true, response });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
+    // Guardar los datos en un archivo temporal
+    const filePath = path.join(__dirname, '../temp/form_data.json');
+    require('fs').writeFileSync(filePath, JSON.stringify({ nombre, descripcion, archivo }));
+
+    // Ejecutar el script de Python para subir a SharePoint
+    exec(`python3 ${path.join(__dirname, '../scripts/upload_to_sharepoint.py')}`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error: ${error.message}`);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+        if (stderr) {
+            console.error(`Stderr: ${stderr}`);
+            return res.status(500).json({ success: false, error: stderr });
+        }
+        console.log(`Stdout: ${stdout}`);
+        res.json({ success: true, message: 'Datos subidos a SharePoint' });
+    });
 });
 
 module.exports = router;

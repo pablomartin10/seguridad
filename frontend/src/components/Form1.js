@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const FormGrid = () => {
+const Form1 = () => {
     const [nombre, setNombre] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [archivo, setArchivo] = useState(null);
@@ -29,6 +29,7 @@ const FormGrid = () => {
 
     return (
         <form onSubmit={handleSubmit}>
+            <h2>Formulario 1</h2>
             <input
                 type="text"
                 placeholder="Nombre"
@@ -52,4 +53,4 @@ const FormGrid = () => {
     );
 };
 
-export default FormGrid;
+export default Form1;
